@@ -37,6 +37,7 @@ public class CustomTerrainEditor : Editor
     bool showPerlinNoise = false;
     bool showMultiplePerlins = false;
     bool showVoronoi = true;
+    bool showMPD = true;
 
     //Link Our Variables
     private void OnEnable()
@@ -161,6 +162,16 @@ public class CustomTerrainEditor : Editor
             {
                 terrain.voronoi();
             }
+        }
+
+        showMPD = EditorGUILayout.Foldout(showMPD, "Midpoint Displacement");
+        if (showMPD)
+        {
+            if (GUILayout.Button("MPD"))
+            {
+                terrain.midPointDisplacement();
+            }
+            
         }
 
         

@@ -209,11 +209,11 @@ MonoBehaviour:
   heightMapScale: {x: 2, y: 1, z: 2}
   resetTerrainCheckBox: 1
   peakCount: 3
-  fallOff: 10
-  dropOff: 10
+  fallOff: 1.4
+  dropOff: 0.4
   minHeight: 0.07
   maxHeight: 0.2
-  voronoiType: 3
+  voronoiType: 2
   perlinXScale: 0.0001
   perlinYScale: 0.0001
   perlinOctaves: 7
