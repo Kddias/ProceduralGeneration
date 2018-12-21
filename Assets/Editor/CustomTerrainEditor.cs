@@ -12,21 +12,31 @@ public class CustomTerrainEditor : Editor
     SerializedProperty randomHeightRange;//reference for the script and the GUI
     SerializedProperty heightMapScale;
     SerializedProperty heightMapImage;
-	 SerializedProperty resetTerrainCheckBox;
+    SerializedProperty resetTerrainCheckBox;
 
+    //Voronoi Properties---------/
+    SerializedProperty VoronoiPeakCount;
+    SerializedProperty VoronoiFallOff;
+    SerializedProperty VoronoiDropOff;
+    SerializedProperty VoronoiminHeight;
+    SerializedProperty VoronoiMaxHeight;
+    SerializedProperty VoronoiType;
+    // --------------------------/
+    
     SerializedProperty perlinXScale, perlinYScale,
                        perlinOffsetX, perlinOffsetY,
                        perlinOctaves, perlinPersistence,
                        perlinHeightScale;
-    
-	GUITableState perlinParametersTable;
-	SerializedProperty perlinParameters;
+
+    GUITableState perlinParametersTable;
+    SerializedProperty perlinParameters;
 
     //Foldouts--------/
     bool showRandom = false;
     bool showLoadHeights = false;
     bool showPerlinNoise = false;
-	bool showMultiplePerlins = false;
+    bool showMultiplePerlins = false;
+    bool showVoronoi = true;
 
     //Link Our Variables
     private void OnEnable()
@@ -41,9 +51,18 @@ public class CustomTerrainEditor : Editor
         perlinOctaves = serializedObject.FindProperty("perlinOctaves");
         perlinPersistence = serializedObject.FindProperty("perlinPersistence");
         perlinHeightScale = serializedObject.FindProperty("perlinHeightScale");
-		resetTerrainCheckBox = serializedObject.FindProperty("resetTerrainCheckBox");
-		perlinParametersTable = new GUITableState("perlinParameterTable");
-		perlinParameters = serializedObject.FindProperty("perlinParameters");
+        resetTerrainCheckBox = serializedObject.FindProperty("resetTerrainCheckBox");
+        perlinParametersTable = new GUITableState("perlinParameterTable");
+        perlinParameters = serializedObject.FindProperty("perlinParameters");
+        //Voronoi-----------/
+        VoronoiPeakCount = serializedObject.FindProperty("peakCount");
+        VoronoiFallOff = serializedObject.FindProperty("fallOff");
+        VoronoiDropOff = serializedObject.FindProperty("dropOff");
+        VoronoiminHeight = serializedObject.FindProperty("minHeight");
+        VoronoiMaxHeight = serializedObject.FindProperty("maxHeight");
+        VoronoiType = serializedObject.FindProperty("voronoiType");
+        
+
     }
 
     //The GUI Loop, it gets update
@@ -53,8 +72,8 @@ public class CustomTerrainEditor : Editor
 
         CustomTerrain terrain = (CustomTerrain)target;//Reference for our SCRIPT
 
-		//CheckBox For resetTerrain
-		EditorGUILayout.PropertyField(resetTerrainCheckBox);
+        //CheckBox For resetTerrain
+        EditorGUILayout.PropertyField(resetTerrainCheckBox);
 
         //Foldout on GUI
         showRandom = EditorGUILayout.Foldout(showRandom, "Random Heights");
@@ -88,30 +107,30 @@ public class CustomTerrainEditor : Editor
             }
         }
 
-		//Foldout MultiplePerlinNoise
-		showMultiplePerlins = EditorGUILayout.Foldout(showMultiplePerlins,"Generate Multiple Perlin");
-		if (showMultiplePerlins)
-		{
-			EditorGUILayout.LabelField("",GUI.skin.horizontalSlider);
-			GUILayout.Label("Multiple Perlin Noise", EditorStyles.boldLabel);
-			perlinParametersTable = GUITableLayout.DrawTable(perlinParametersTable,
-			                                            serializedObject.FindProperty("perlinParameters"));
-		    GUILayout.Space(20);
-		    EditorGUILayout.BeginHorizontal();
-			if (GUILayout.Button("+"))
-			{
-				terrain.addNewPerlin();
+        //Foldout MultiplePerlinNoise
+        showMultiplePerlins = EditorGUILayout.Foldout(showMultiplePerlins, "Generate Multiple Perlin");
+        if (showMultiplePerlins)
+        {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            GUILayout.Label("Multiple Perlin Noise", EditorStyles.boldLabel);
+            perlinParametersTable = GUITableLayout.DrawTable(perlinParametersTable,
+                                                        serializedObject.FindProperty("perlinParameters"));
+            GUILayout.Space(20);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("+"))
+            {
+                terrain.addNewPerlin();
             }
             if (GUILayout.Button("-"))
             {
                 terrain.removeNewPerlin();
             }
-			EditorGUILayout.EndHorizontal();
-			if (GUILayout.Button("Apply Multiple Perlin"))
-			{
-				terrain.MultiplePerlin();
-			}
-		}
+            EditorGUILayout.EndHorizontal();
+            if (GUILayout.Button("Apply Multiple Perlin"))
+            {
+                terrain.MultiplePerlin();
+            }
+        }
 
         //Foldout to HeightMap
         showLoadHeights = EditorGUILayout.Foldout(showLoadHeights, "Load Heights");
@@ -127,18 +146,30 @@ public class CustomTerrainEditor : Editor
             }
         }
 
+        //Voronoi
+        showVoronoi = EditorGUILayout.Foldout(showVoronoi, "Voronoi");
+        if (showVoronoi)
+        {
+            GUILayout.Label("Generate Voronoi Peaks", EditorStyles.boldLabel);
+            EditorGUILayout.IntSlider(VoronoiPeakCount, 1, 10, new GUIContent("Peak count"));
+            EditorGUILayout.Slider(VoronoiFallOff, 0.1f, 10, new GUIContent("Falloff"));
+            EditorGUILayout.Slider(VoronoiDropOff, 0.1f, 10, new GUIContent("DropOff"));
+            EditorGUILayout.Slider(VoronoiminHeight, 0.0f, 1f, new GUIContent("Min Height"));
+            EditorGUILayout.Slider(VoronoiMaxHeight, 0.0f, 1f, new GUIContent("Max Height"));
+            EditorGUILayout.PropertyField(VoronoiType);
+            if (GUILayout.Button("Voronoi"))
+            {
+                terrain.voronoi();
+            }
+        }
 
-
+        
         //resetButton
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         if (GUILayout.Button("Reset Terrain"))
         {
             terrain.resetTerrain();
         }
-
-
-
-
         serializedObject.ApplyModifiedProperties();//L
     }
 }
