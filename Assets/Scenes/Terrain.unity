@@ -205,8 +205,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   randomHeightRange: {x: 0.38, y: 0.17}
-  heightMapImage: {fileID: 2800000, guid: 6b8b522f861864f43a7fc4300655674d, type: 3}
-  heightMapScale: {x: 2, y: 1, z: 2}
+  heightMapImage: {fileID: 2800000, guid: dd08af7040fff3f4480dcbff85f15fbc, type: 3}
+  heightMapScale: {x: 2, y: 0.1, z: 2}
   resetTerrainCheckBox: 1
   peakCount: 3
   fallOff: 1.4
@@ -230,8 +230,50 @@ MonoBehaviour:
     mPerlinOffsetX: 0
     mPerlinOffsetY: 0
     remove: 0
+  splatHeightsList:
+  - texture: {fileID: 2800000, guid: e35e4eee2ed304077955f59989b44ff4, type: 3}
+    minHeight: 0
+    maxHeight: 0.05
+    minSlope: 0
+    maxSlope: 1.5
+    tileOffset: {x: 0, y: 0}
+    tileSize: {x: 50, y: 50}
+    splatOffSet: 0.01
+    noiseXScale: 0.01
+    noiseYScale: 0.01
+    noiseScaler: 0.1
+    remove: 1
+  - texture: {fileID: 2800000, guid: 1368cbe84e5ef458787070c6ea7ae2ee, type: 3}
+    minHeight: 0.05
+    maxHeight: 0.2
+    minSlope: 0
+    maxSlope: 1.5
+    tileOffset: {x: 0, y: 0}
+    tileSize: {x: 50, y: 50}
+    splatOffSet: 0.01
+    noiseXScale: 0.01
+    noiseYScale: 0.01
+    noiseScaler: 0.1
+    remove: 0
+  - texture: {fileID: 2800000, guid: c0afc0990a99342a9bd0b7b59053e908, type: 3}
+    minHeight: 0.2
+    maxHeight: 1
+    minSlope: 0
+    maxSlope: 1.5
+    tileOffset: {x: 0, y: 0}
+    tileSize: {x: 50, y: 50}
+    splatOffSet: 0.01
+    noiseXScale: 0.01
+    noiseYScale: 0.01
+    noiseScaler: 0.1
+    remove: 0
   terrain: {fileID: 320430130}
   terrainData: {fileID: 15600000, guid: 69a8ce386c7e5064f822501280d40372, type: 2}
+  MPDminHeight: -2
+  MPDmaxHeight: 2
+  MPDRoughness: 2
+  MPDHeightDampener: 2
+  smoothAmount: 10
 --- !u!1 &412960380
 GameObject:
   m_ObjectHideFlags: 0
@@ -307,8 +349,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 412960380}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.14159425, y: 0.10019859, z: -0.014407249, w: 0.98473537}
+  m_LocalPosition: {x: 111.11138, y: 20.605072, z: 218.3305}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}

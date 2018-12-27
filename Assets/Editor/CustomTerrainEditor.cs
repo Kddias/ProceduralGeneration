@@ -21,8 +21,14 @@ public class CustomTerrainEditor : Editor
     SerializedProperty VoronoiminHeight;
     SerializedProperty VoronoiMaxHeight;
     SerializedProperty VoronoiType;
-    // --------------------------/
-    
+    // MPD --------------------------/
+    SerializedProperty MPDminHeight;
+    SerializedProperty MPDmaxHeight;
+    SerializedProperty MPDRoughness;
+    SerializedProperty MPDHeightDampener;
+    //Smooth--------------------------------/
+    SerializedProperty smoothAmount;
+    //---Perlin------
     SerializedProperty perlinXScale, perlinYScale,
                        perlinOffsetX, perlinOffsetY,
                        perlinOctaves, perlinPersistence,
@@ -30,14 +36,19 @@ public class CustomTerrainEditor : Editor
 
     GUITableState perlinParametersTable;
     SerializedProperty perlinParameters;
+    //SplatMaps
+    GUITableState splatMapTable;
+    SerializedProperty splatHeights;
 
     //Foldouts--------/
     bool showRandom = false;
     bool showLoadHeights = false;
     bool showPerlinNoise = false;
     bool showMultiplePerlins = false;
-    bool showVoronoi = true;
-    bool showMPD = true;
+    bool showVoronoi = false;
+    bool showMPD = false;
+    bool showSmooth = false;
+    bool showSplatMaps = false;
 
     //Link Our Variables
     private void OnEnable()
@@ -55,6 +66,9 @@ public class CustomTerrainEditor : Editor
         resetTerrainCheckBox = serializedObject.FindProperty("resetTerrainCheckBox");
         perlinParametersTable = new GUITableState("perlinParameterTable");
         perlinParameters = serializedObject.FindProperty("perlinParameters");
+        //SplatMaps----------/
+        splatMapTable = new GUITableState("splatMapTable");
+        splatHeights = serializedObject.FindProperty("splatHeights");
         //Voronoi-----------/
         VoronoiPeakCount = serializedObject.FindProperty("peakCount");
         VoronoiFallOff = serializedObject.FindProperty("fallOff");
@@ -62,6 +76,13 @@ public class CustomTerrainEditor : Editor
         VoronoiminHeight = serializedObject.FindProperty("minHeight");
         VoronoiMaxHeight = serializedObject.FindProperty("maxHeight");
         VoronoiType = serializedObject.FindProperty("voronoiType");
+        //MPD-------------/
+        MPDminHeight = serializedObject.FindProperty("MPDminHeight");
+        MPDmaxHeight = serializedObject.FindProperty("MPDmaxHeight");
+        MPDRoughness = serializedObject.FindProperty("MPDRoughness");
+        MPDHeightDampener = serializedObject.FindProperty("MPDHeightDampener");
+        //SMooth---------/
+        smoothAmount = serializedObject.FindProperty("smoothAmount");
         
 
     }
@@ -72,6 +93,8 @@ public class CustomTerrainEditor : Editor
         serializedObject.Update();//F
 
         CustomTerrain terrain = (CustomTerrain)target;//Reference for our SCRIPT
+
+        
 
         //CheckBox For resetTerrain
         EditorGUILayout.PropertyField(resetTerrainCheckBox);
@@ -133,6 +156,7 @@ public class CustomTerrainEditor : Editor
             }
         }
 
+     
         //Foldout to HeightMap
         showLoadHeights = EditorGUILayout.Foldout(showLoadHeights, "Load Heights");
         if (showLoadHeights)//A foldout need to be followed by a if statement
@@ -163,10 +187,15 @@ public class CustomTerrainEditor : Editor
                 terrain.voronoi();
             }
         }
-
+        
+        //MPD
         showMPD = EditorGUILayout.Foldout(showMPD, "Midpoint Displacement");
         if (showMPD)
         {
+            EditorGUILayout.Slider(MPDminHeight, -10, 10, new GUIContent("Min Height"));
+            EditorGUILayout.Slider(MPDmaxHeight, -10f, 10f, new GUIContent("Max Height"));
+            EditorGUILayout.Slider(MPDRoughness, 0f, 100, new GUIContent("Roughness"));
+            EditorGUILayout.Slider(MPDHeightDampener, 0f, 10, new GUIContent("Dampener"));
             if (GUILayout.Button("MPD"))
             {
                 terrain.midPointDisplacement();
@@ -174,7 +203,45 @@ public class CustomTerrainEditor : Editor
             
         }
 
-        
+           //SplatMaps
+        showSplatMaps = EditorGUILayout.Foldout(showSplatMaps, "Splat Maps");
+        if (showSplatMaps)
+        {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            GUILayout.Label("Splat Maps", EditorStyles.boldLabel);
+            GUILayout.Space(10);
+            splatMapTable = GUITableLayout.DrawTable(splatMapTable,
+                                                        serializedObject.FindProperty("splatHeightsList"));
+            GUILayout.Space(20);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("+"))
+            {
+                terrain.AddNewSplatHeight();
+            }
+            if (GUILayout.Button("-"))
+            {
+                terrain.RemoveSplatHeight();
+            }
+            EditorGUILayout.EndHorizontal();
+            if (GUILayout.Button("Apply SplatMaps"))
+            {
+                terrain.SplatMaps();
+            }
+            GUILayout.Space(20);
+        }
+
+
+        //SmoothButton
+        showSmooth = EditorGUILayout.Foldout(showSmooth,"Smooth");
+        if (showSmooth)
+        {
+            EditorGUILayout.PropertyField(smoothAmount);
+            if (GUILayout.Button("Smooth"))
+            {
+                terrain.Smooth();
+            }
+        }
+
         //resetButton
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
         if (GUILayout.Button("Reset Terrain"))
