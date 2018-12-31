@@ -124,7 +124,7 @@ GameObject:
   - component: {fileID: 320430130}
   - component: {fileID: 320430129}
   - component: {fileID: 320430132}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Terrain
   m_TagString: Terrain
   m_Icon: {fileID: 0}
@@ -204,21 +204,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c5c64fe8dd89b94781e906c8b596415, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  randomHeightRange: {x: 0.38, y: 0.17}
-  heightMapImage: {fileID: 2800000, guid: dd08af7040fff3f4480dcbff85f15fbc, type: 3}
-  heightMapScale: {x: 2, y: 0.1, z: 2}
+  randomHeightRange: {x: 0, y: 0.1}
+  heightMapImage: {fileID: 0}
+  heightMapScale: {x: 1, y: 1, z: 1}
   resetTerrainCheckBox: 1
-  peakCount: 3
-  fallOff: 1.4
-  dropOff: 0.4
-  minHeight: 0.07
-  maxHeight: 0.2
-  voronoiType: 2
-  perlinXScale: 0.0001
-  perlinYScale: 0.0001
-  perlinOctaves: 7
-  perlinPersistence: 0.1
-  perlinHeightScale: 0.2
+  peakCount: 1
+  fallOff: 0.2
+  dropOff: 0.6
+  minHeight: 0.2
+  maxHeight: 0.5
+  voronoiType: 0
+  perlinXScale: 0.01
+  perlinYScale: 0.01
+  perlinOctaves: 3
+  perlinPersistence: 8
+  perlinHeightScale: 0.09
   perlinOffsetX: 0
   perlinOffsetY: 0
   perlinParameters:
@@ -231,33 +231,9 @@ MonoBehaviour:
     mPerlinOffsetY: 0
     remove: 0
   splatHeightsList:
-  - texture: {fileID: 2800000, guid: e35e4eee2ed304077955f59989b44ff4, type: 3}
-    minHeight: 0
-    maxHeight: 0.05
-    minSlope: 0
-    maxSlope: 1.5
-    tileOffset: {x: 0, y: 0}
-    tileSize: {x: 50, y: 50}
-    splatOffSet: 0.01
-    noiseXScale: 0.01
-    noiseYScale: 0.01
-    noiseScaler: 0.1
-    remove: 1
-  - texture: {fileID: 2800000, guid: 1368cbe84e5ef458787070c6ea7ae2ee, type: 3}
-    minHeight: 0.05
+  - texture: {fileID: 0}
+    minHeight: 0.1
     maxHeight: 0.2
-    minSlope: 0
-    maxSlope: 1.5
-    tileOffset: {x: 0, y: 0}
-    tileSize: {x: 50, y: 50}
-    splatOffSet: 0.01
-    noiseXScale: 0.01
-    noiseYScale: 0.01
-    noiseScaler: 0.1
-    remove: 0
-  - texture: {fileID: 2800000, guid: c0afc0990a99342a9bd0b7b59053e908, type: 3}
-    minHeight: 0.2
-    maxHeight: 1
     minSlope: 0
     maxSlope: 1.5
     tileOffset: {x: 0, y: 0}
@@ -273,7 +249,38 @@ MonoBehaviour:
   MPDmaxHeight: 2
   MPDRoughness: 2
   MPDHeightDampener: 2
-  smoothAmount: 10
+  smoothAmount: 2
+  vegetations:
+  - mesh: {fileID: 100000, guid: 25fa881dbd110e38a00062d88f962b59, type: 3}
+    minHeight: 0
+    maxHeight: 0.1
+    minSlope: 0
+    maxSlope: 90
+    minScale: 0.5
+    maxScale: 1
+    colour1: {r: 0.8182994, g: 0.8679245, b: 0.15966538, a: 1}
+    colour2: {r: 0.5754717, g: 0.046146322, b: 0.09177783, a: 1}
+    lightColour: {r: 0.85973203, g: 0.8867924, b: 0.4141153, a: 1}
+    minRotation: 0
+    maxRotation: 360
+    density: 0.5
+    remove: 0
+  - mesh: {fileID: 100000, guid: 43202a31bd1113061100b7a844295342, type: 3}
+    minHeight: 0.1
+    maxHeight: 1
+    minSlope: 0
+    maxSlope: 90
+    minScale: 0.5
+    maxScale: 1
+    colour1: {r: 0.509434, g: 0.0985226, b: 0.3563072, a: 1}
+    colour2: {r: 1, g: 1, b: 1, a: 1}
+    lightColour: {r: 0.5086947, g: 0.8773585, b: 0.29383236, a: 1}
+    minRotation: 0
+    maxRotation: 360
+    density: 0.8
+    remove: 0
+  maximumTrees: 10000
+  treeSpacing: 5
 --- !u!1 &412960380
 GameObject:
   m_ObjectHideFlags: 0

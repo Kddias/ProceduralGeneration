@@ -9,7 +9,9 @@ public class CustomTerrain : MonoBehaviour
 {
 
     #region Declarations
-
+    public enum TagType { Tag = 0, Layer = 1 }
+    [SerializeField]
+    int terrainLayer = 0;
     public Vector2 randomHeightRange = new Vector2(0, 0.1f);
     public Texture2D heightMapImage;
     public Vector3 heightMapScale = new Vector3(1, 1, 1);
@@ -23,7 +25,6 @@ public class CustomTerrain : MonoBehaviour
     public float maxHeight = 0.5f;
     public enum VoronoiType { Linear = 0, Power = 1, Combined = 2, SinPower }
     public VoronoiType voronoiType = VoronoiType.Linear;
-
 
     //PerlinNoise----------------------------/
     public float perlinXScale = 0.01f;
@@ -53,12 +54,13 @@ public class CustomTerrain : MonoBehaviour
     //SplatMaps---------------------------/
 
     [System.Serializable]
-    public class splatHeights{
+    public class splatHeights
+    {
         public Texture2D texture = null;
         public float minHeight = 0.1f;
         public float maxHeight = 0.2f;
-        public float minSlope =0f;
-        public float maxSlope=1.5f;
+        public float minSlope = 0f;
+        public float maxSlope = 1.5f;
         public Vector2 tileOffset = new Vector2(0, 0);
         public Vector2 tileSize = new Vector2(50, 50);
         public float splatOffSet = 0.01f;
@@ -82,12 +84,134 @@ public class CustomTerrain : MonoBehaviour
 
     //Smooth----------------------------/
     public int smoothAmount = 2;
+    //Vegetation ----------------------/
+    [System.Serializable]
+    public class Vegetation
+    {
+        public GameObject mesh;
+        public float minHeight = 0.1f;
+        public float maxHeight = 0.2f;
+        public float minSlope = 0f;
+        public float maxSlope = 90;
+        public float minScale = 0.5f;
+        public float maxScale = 1.0f;
+        public Color colour1 = Color.white;
+        public Color colour2 = Color.white;
+        public Color lightColour = Color.white;
+        public float minRotation = 0;
+        public float maxRotation = 360;
+        public float density = 0.5f;
+        public bool remove = false;
+    }
+    public List<Vegetation> vegetations = new List<Vegetation>(){
+        new Vegetation()
+    };
+    public int maximumTrees = 5000;
+    public int treeSpacing = 5;
 
     #endregion
-    public void AddNewSplatHeight(){
+    public void AddVegetation()
+    {
+        vegetations.Add(new Vegetation());
+    }
+    public void RemoveVegetation()
+    {
+        List<Vegetation> kept = new List<Vegetation>();
+        for (int i = 0; i < vegetations.Count; i++)
+        {
+            if (!vegetations[i].remove)
+            {
+                kept.Add(vegetations[i]);
+            }
+        }
+        if (kept.Count == 0)
+        {
+            kept.Add(vegetations[0]);
+        }
+        vegetations = kept;
+    }
+    public void applyVegetation()
+    {
+        TreePrototype[] newTreePrototypes;
+        newTreePrototypes = new TreePrototype[vegetations.Count];
+        int tindex = 0;
+        foreach (Vegetation t in vegetations)
+        {
+            newTreePrototypes[tindex] = new TreePrototype();
+            newTreePrototypes[tindex].prefab = t.mesh;
+            tindex++;
+        }
+        terrainData.treePrototypes = newTreePrototypes;
+
+        List<TreeInstance> allVegetation = new List<TreeInstance>();
+        for (int z = 0; z < terrainData.size.z; z += treeSpacing)
+        {
+            for (int x = 0; x < terrainData.size.x; x += treeSpacing)
+            {
+                for (int tp = 0; tp < terrainData.treePrototypes.Length; tp++)
+                {
+                    if (UnityEngine.Random.Range(0.0f, 1.0f) > vegetations[tp].density) break;
+
+                    float thisHeight = terrainData.GetHeight(x, z) / terrainData.size.y;
+                    float thisHeightStart = vegetations[tp].minHeight;
+                    float thisHeightEnd = vegetations[tp].maxHeight;
+
+                    float steepness = terrainData.GetSteepness(x / (float)terrainData.size.x,
+                                                               z / (float)terrainData.size.z);
+
+                    if ((thisHeight >= thisHeightStart && thisHeight <= thisHeightEnd) &&
+                        (steepness >= vegetations[tp].minSlope && steepness <= vegetations[tp].maxSlope))
+                    {
+                        TreeInstance instance = new TreeInstance();
+                        instance.position = new Vector3((x + UnityEngine.Random.Range(-5.0f, 5.0f)) / terrainData.size.x,
+                                                        terrainData.GetHeight(x, z) / terrainData.size.y,
+                                                        (z + UnityEngine.Random.Range(-5.0f, 5.0f)) / terrainData.size.z);
+
+                        Vector3 treeWorldPos = new Vector3(instance.position.x * terrainData.size.x,
+                            instance.position.y * terrainData.size.y,
+                            instance.position.z * terrainData.size.z)
+                                                         + this.transform.position;
+
+                        RaycastHit hit;
+                        int layerMask = 1 << terrainLayer;
+
+                        if (Physics.Raycast(treeWorldPos + new Vector3(0, 10, 0), -Vector3.up, out hit, 100, layerMask) ||
+                            Physics.Raycast(treeWorldPos - new Vector3(0, 10, 0), Vector3.up, out hit, 100, layerMask))
+                        {
+                            float treeHeight = (hit.point.y - this.transform.position.y) / terrainData.size.y;
+                            instance.position = new Vector3(instance.position.x,
+                                                             treeHeight,
+                                                             instance.position.z);
+
+                            instance.rotation = UnityEngine.Random.Range(vegetations[tp].minRotation,
+                                                                         vegetations[tp].maxRotation);
+                            instance.prototypeIndex = tp;
+                            instance.color = Color.Lerp(vegetations[tp].colour1,
+                                                        vegetations[tp].colour2,
+                                                        UnityEngine.Random.Range(0.0f, 1.0f));
+                            instance.lightmapColor = vegetations[tp].lightColour;
+                            float s = UnityEngine.Random.Range(vegetations[tp].minScale, vegetations[tp].maxScale);
+                            instance.heightScale = s;
+                            instance.widthScale = s;
+
+                            allVegetation.Add(instance);
+                            if (allVegetation.Count >= maximumTrees) goto TREESDONE;
+                        }
+
+
+                    }
+                }
+            }
+        }
+    TREESDONE:
+        terrainData.treeInstances = allVegetation.ToArray();
+    }
+    public void AddNewSplatHeight()
+    {
         splatHeightsList.Add(new splatHeights());
     }
-    public void RemoveSplatHeight(){
+    public void RemoveSplatHeight()
+    {
         List<splatHeights> kept = new List<splatHeights>();
         for (int i = 0; i < splatHeightsList.Count; i++)
         {
@@ -102,21 +226,23 @@ public class CustomTerrain : MonoBehaviour
         }
         splatHeightsList = kept;
     }
-    float GetSteepness(float[,] heightmap,int x,int y,int width,int height){
-        float h = heightmap[x,y];
-        int nx = x+1;
-        int ny = y+1;
+    float GetSteepness(float[,] heightmap, int x, int y, int width, int height)
+    {
+        float h = heightmap[x, y];
+        int nx = x + 1;
+        int ny = y + 1;
         //if on the edge
-        if(nx > width - 1) nx = x-1;
-        if(ny > height - 1) ny = y-1;
+        if (nx > width - 1) nx = x - 1;
+        if (ny > height - 1) ny = y - 1;
 
-        float dx = heightmap[nx,y] - h;
-        float dy = heightmap[x,ny] - h;
-        Vector2 gradient = new Vector2(dx,dy);
+        float dx = heightmap[nx, y] - h;
+        float dy = heightmap[x, ny] - h;
+        Vector2 gradient = new Vector2(dx, dy);
         float steep = gradient.magnitude;
         return steep;
     }
-    public void SplatMaps(){
+    public void SplatMaps()
+    {
         TerrainLayer[] newSplatPrototypes;
         newSplatPrototypes = new TerrainLayer[splatHeightsList.Count];
         int spindex = 0;
@@ -130,7 +256,7 @@ public class CustomTerrain : MonoBehaviour
             spindex++;
         }
         terrainData.terrainLayers = newSplatPrototypes;
-        float[,] heightMap = terrainData.GetHeights(0,0,
+        float[,] heightMap = terrainData.GetHeights(0, 0,
                                                     terrainData.heightmapWidth,
                                                     terrainData.heightmapHeight);
         float[,,] splatmapData = new float[terrainData.alphamapWidth,
@@ -144,8 +270,8 @@ public class CustomTerrain : MonoBehaviour
                 float[] splat = new float[terrainData.alphamapLayers];
                 for (int i = 0; i < splatHeightsList.Count; i++)
                 {
-                    float noise = Mathf.PerlinNoise(x*splatHeightsList[i].noiseXScale
-                                                   ,y*splatHeightsList[i].noiseYScale)
+                    float noise = Mathf.PerlinNoise(x * splatHeightsList[i].noiseXScale
+                                                   , y * splatHeightsList[i].noiseYScale)
                                                     * splatHeightsList[i].noiseScaler;
                     float offSet = splatHeightsList[i].splatOffSet + noise;
                     float thisHeightStart = splatHeightsList[i].minHeight - offSet;
@@ -153,11 +279,11 @@ public class CustomTerrain : MonoBehaviour
                     //float steepness = GetSteepness(heightMap,x,y,
                     //                              terrainData.heightmapWidth,
                     //                               terrainData.heightmapHeight);
-                    float steepness = terrainData.GetSteepness(y/(float)terrainData.alphamapHeight,
-                                                               x/(float)terrainData.alphamapWidth);
+                    float steepness = terrainData.GetSteepness(y / (float)terrainData.alphamapHeight,
+                                                               x / (float)terrainData.alphamapWidth);
 
-                    if ((heightMap[x, y] >= thisHeightStart && heightMap[x, y] <= thisHeightStop)&&
-                        steepness >= splatHeightsList[i].minSlope && 
+                    if ((heightMap[x, y] >= thisHeightStart && heightMap[x, y] <= thisHeightStop) &&
+                        steepness >= splatHeightsList[i].minSlope &&
                         steepness <= splatHeightsList[i].maxSlope)
                     {
                         splat[i] = 1;
@@ -166,21 +292,22 @@ public class CustomTerrain : MonoBehaviour
                 NormalizeVector(splat);
                 for (int j = 0; j < splatHeightsList.Count; j++)
                 {
-                    splatmapData[x,y,j] = splat[j];
+                    splatmapData[x, y, j] = splat[j];
                 }
             }
         }
-        terrainData.SetAlphamaps(0,0,splatmapData);
+        terrainData.SetAlphamaps(0, 0, splatmapData);
     }
-    void NormalizeVector(float[] vector){
+    void NormalizeVector(float[] vector)
+    {
         float total = 0;
         for (int i = 0; i < vector.Length; i++)
         {
-            total+=vector[i];
+            total += vector[i];
         }
         for (int i = 0; i < vector.Length; i++)
         {
-            vector[i]/=total;
+            vector[i] /= total;
         }
     }
     float[,] getHeightMap()
@@ -361,8 +488,8 @@ public class CustomTerrain : MonoBehaviour
     //Blurr Algorithm
     public void Smooth()
     {
-        float[,] heightMap = terrainData.GetHeights(0,0,
-        terrainData.heightmapWidth,terrainData.heightmapHeight);
+        float[,] heightMap = terrainData.GetHeights(0, 0,
+        terrainData.heightmapWidth, terrainData.heightmapHeight);
         float smoothProgress = 0;
         EditorUtility.DisplayProgressBar("Smoothing Terrain",
                                  "Progress",
@@ -389,7 +516,7 @@ public class CustomTerrain : MonoBehaviour
             smoothProgress++;
             EditorUtility.DisplayProgressBar("Smoothing Terrain",
                                              "Progress",
-                                             smoothProgress/smoothAmount);
+                                             smoothProgress / smoothAmount);
 
         }
         terrainData.SetHeights(0, 0, heightMap);
@@ -518,37 +645,53 @@ public class CustomTerrain : MonoBehaviour
     private void Awake()
     {
         SerializedObject tagManager = new SerializedObject(
-            AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+        AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
         SerializedProperty tagsProp = tagManager.FindProperty("tags");
 
-        Addtag(tagsProp, "Terrain");
-        Addtag(tagsProp, "Cloud");
-        Addtag(tagsProp, "Shore");
+        AddTag(tagsProp, "Terrain", TagType.Tag);
+        AddTag(tagsProp, "Cloud", TagType.Tag);
+        AddTag(tagsProp, "Shore", TagType.Tag);
 
         tagManager.ApplyModifiedProperties();
 
+        SerializedProperty layerProp = tagManager.FindProperty("layers");
+        terrainLayer = AddTag(layerProp, "Terrain", TagType.Layer);
+        tagManager.ApplyModifiedProperties();
+
         this.gameObject.tag = "Terrain";
+        this.gameObject.layer = terrainLayer;
     }
-    void Addtag(SerializedProperty tagsProp, string newTag)
+    int AddTag(SerializedProperty tagsProp, string newTag, TagType tType)
     {
         bool found = false;
-        //look if tag exists
+        //ensure the tag doesn't already exist
         for (int i = 0; i < tagsProp.arraySize; i++)
         {
             SerializedProperty t = tagsProp.GetArrayElementAtIndex(i);
-            if (t.stringValue.Equals(newTag))
-            {
-                found = true;
-                break;
-            }
+            if (t.stringValue.Equals(newTag)) { found = true; return i; }
         }
-        //if not add a new one
-        if (!found)
+        //add your new tag
+        if (!found && tType == TagType.Tag)
         {
             tagsProp.InsertArrayElementAtIndex(0);
             SerializedProperty newTagProp = tagsProp.GetArrayElementAtIndex(0);
             newTagProp.stringValue = newTag;
         }
+        //add new layer
+        else if (!found && tType == TagType.Layer)
+        {
+            for (int j = 8; j < tagsProp.arraySize; j++)
+            {
+                SerializedProperty newLayer = tagsProp.GetArrayElementAtIndex(j);
+                //add layer in next empty slot
+                if (newLayer.stringValue == "")
+                {
+                    newLayer.stringValue = newTag;
+                    return j;
+                }
+            }
+        }
+        return -1;
     }
-    
+
 }

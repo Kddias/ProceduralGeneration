@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using EditorGUITable;
+using System.IO;
 
 [CustomEditor(typeof(CustomTerrain))]
 [CanEditMultipleObjects]
@@ -21,13 +22,16 @@ public class CustomTerrainEditor : Editor
     SerializedProperty VoronoiminHeight;
     SerializedProperty VoronoiMaxHeight;
     SerializedProperty VoronoiType;
+
     // MPD --------------------------/
     SerializedProperty MPDminHeight;
     SerializedProperty MPDmaxHeight;
     SerializedProperty MPDRoughness;
     SerializedProperty MPDHeightDampener;
+
     //Smooth--------------------------------/
     SerializedProperty smoothAmount;
+
     //---Perlin------
     SerializedProperty perlinXScale, perlinYScale,
                        perlinOffsetX, perlinOffsetY,
@@ -36,9 +40,20 @@ public class CustomTerrainEditor : Editor
 
     GUITableState perlinParametersTable;
     SerializedProperty perlinParameters;
+
     //SplatMaps
     GUITableState splatMapTable;
     SerializedProperty splatHeights;
+
+    //HeightMap
+    SerializedProperty heightMapTexture;
+
+    //Vegetation
+    SerializedProperty maximumTrees;
+    SerializedProperty treeSpacing;
+    GUITableState vegetations;
+    SerializedProperty Vegetation;
+
 
     //Foldouts--------/
     bool showRandom = false;
@@ -49,6 +64,11 @@ public class CustomTerrainEditor : Editor
     bool showMPD = false;
     bool showSmooth = false;
     bool showSplatMaps = false;
+    bool showVegetation = false;
+    bool showHeightMap = false;
+
+    //Other
+    Texture2D hmTexture;
 
     //Link Our Variables
     private void OnEnable()
@@ -83,6 +103,14 @@ public class CustomTerrainEditor : Editor
         MPDHeightDampener = serializedObject.FindProperty("MPDHeightDampener");
         //SMooth---------/
         smoothAmount = serializedObject.FindProperty("smoothAmount");
+        //HeightMap------/
+        hmTexture = new Texture2D(513, 513, TextureFormat.ARGB32, false);
+        //Vegetation
+        maximumTrees = serializedObject.FindProperty("maximumTrees");
+        treeSpacing = serializedObject.FindProperty("treeSpacing");
+        vegetations = new GUITableState("vegetations");
+        Vegetation = serializedObject.FindProperty("Vegetation");
+
         
 
     }
@@ -90,11 +118,9 @@ public class CustomTerrainEditor : Editor
     //The GUI Loop, it gets update
     public override void OnInspectorGUI()
     {
-        serializedObject.Update();//F
+        serializedObject.Update();//Begin
 
         CustomTerrain terrain = (CustomTerrain)target;//Reference for our SCRIPT
-
-        
 
         //CheckBox For resetTerrain
         EditorGUILayout.PropertyField(resetTerrainCheckBox);
@@ -230,6 +256,36 @@ public class CustomTerrainEditor : Editor
             GUILayout.Space(20);
         }
 
+        showVegetation = EditorGUILayout.Foldout(showVegetation, "Vegetation");
+        if (showVegetation)
+        {
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            GUILayout.Label("Configure Vegetation", EditorStyles.boldLabel);
+            GUILayout.Space(10);
+            EditorGUILayout.IntSlider(maximumTrees, 1, 10000, new GUIContent("Maximum Trees"));
+            EditorGUILayout.IntSlider(treeSpacing, 1, 25, new GUIContent("Trees Spacing"));
+            GUILayout.Space(10);
+            vegetations = GUITableLayout.DrawTable(vegetations,
+                                                        serializedObject.FindProperty("vegetations"));
+            GUILayout.Space(20);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("+"))
+            {
+                terrain.AddVegetation();
+            }
+            if (GUILayout.Button("-"))
+            {
+                terrain.RemoveVegetation();
+            }
+            EditorGUILayout.EndHorizontal();
+            if (GUILayout.Button("Apply Vegetation"))
+            {
+                terrain.applyVegetation();
+            }
+
+
+        }
+
 
         //SmoothButton
         showSmooth = EditorGUILayout.Foldout(showSmooth,"Smooth");
@@ -248,6 +304,54 @@ public class CustomTerrainEditor : Editor
         {
             terrain.resetTerrain();
         }
-        serializedObject.ApplyModifiedProperties();//L
+
+
+        //Height Map
+        showHeightMap = EditorGUILayout.Foldout(showHeightMap, "Height Map");
+        if (showHeightMap)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            int hmtSize = (int)(EditorGUIUtility.currentViewWidth - 100);
+            GUILayout.Label(hmTexture, GUILayout.Width(hmtSize), GUILayout.Height(hmtSize));
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Refresh", GUILayout.Width(hmtSize)))
+            {
+                float[,] heightMap = terrain.terrainData.GetHeights(0, 0, 
+                                                                    terrain.terrainData.heightmapWidth, 
+                                                                    terrain.terrainData.heightmapHeight);
+                for (int y = 0; y < terrain.terrainData.heightmapWidth; y++)
+                {
+                    for (int x = 0; x < terrain.terrainData.heightmapHeight; x++)
+                    {
+                        hmTexture.SetPixel(x, y, new Color(heightMap[x, y], 
+                                                           heightMap[x, y], 
+                                                           heightMap[x, y], 1));
+                    }
+                }
+                hmTexture.Apply();
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+
+            if (GUILayout.Button("Save", GUILayout.Width(hmtSize)))
+            {
+                byte[] bytes = hmTexture.EncodeToPNG();
+                System.IO.Directory.CreateDirectory(Application.dataPath + "/SavedTextures");
+                File.WriteAllBytes(Application.dataPath + "/SavedTextures/" + "MyTexture" + ".png", bytes);
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+
+        }
+
+        serializedObject.ApplyModifiedProperties(); // END
     }
 }
